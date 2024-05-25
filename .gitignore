@@ -1,0 +1,6 @@
+.cache/
+.local/
+.upm/
+node_modules/
+.replit
+replit.nix

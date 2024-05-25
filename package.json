@@ -1,0 +1,38 @@
+{
+  "name": "KurtV2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Rui Reogo (ruingl)",
+  "dependencies": {
+    "@distube/ytdl-core": "^4.13.3",
+    "@neoxr/ytdl-core": "^4.11.5",
+    "axios": "^1.6.8",
+    "chalk": "4.1.2",
+    "express": "^4.19.2",
+    "fca-liane-utils": "^1.0.1",
+    "figlet": "^1.7.0",
+    "fs-extra": "^11.2.0",
+    "g4f": "^1.4.3",
+    "hercai": "^12.2.0",
+    "https-proxy-agent": "4.0.0",
+    "lodash": "^4.17.21",
+    "moment-timezone": "^0.5.45",
+    "mqtt": "3.0.0",
+    "node-gtts": "^2.0.2",
+    "npmlog": "1.2.0",
+    "pastebin-api": "^7.0.0",
+    "request": "2.53.0",
+    "websocket-stream": "5.5.0"
+  },
+  "license": "LGPL-3.0",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
