@@ -1,7 +1,7 @@
 "use strict";
 
-const utils = require("../utils");
-const log = require("npmlog");
+var utils = require("../utils");
+var log = require("npmlog");
 
 function formatEventReminders(reminder) {
   return {
@@ -10,7 +10,6 @@ function formatEventReminders(reminder) {
     time: reminder.time,
     eventType: reminder.lightweight_event_type.toLowerCase(),
     locationName: reminder.location_name,
-    // @TODO verify this
     locationCoordinates: reminder.location_coordinates,
     locationPage: reminder.location_page,
     eventStatus: reminder.lightweight_event_status.toLowerCase(),
@@ -24,56 +23,37 @@ function formatEventReminders(reminder) {
     members: reminder.event_reminder_members.edges.map(function (member) {
       return {
         memberID: member.node.id,
-        state: member.guest_list_state.toLowerCase(),
+        state: member.guest_list_state.toLowerCase()
       };
-    }),
+    })
   };
 }
 
 function formatThreadGraphQLResponse(data) {
-  if (data.errors) return data.errors;
-  const messageThread = data.message_thread;
-  if (!messageThread) return null;
-  const threadID = messageThread.thread_key.thread_fbid
-    ? messageThread.thread_key.thread_fbid
-    : messageThread.thread_key.other_user_id;
+  var messageThread = data.o0.data.message_thread;
+  var threadID = messageThread.thread_key.thread_fbid ? messageThread.thread_key.thread_fbid : messageThread.thread_key.other_user_id;
 
-  // Remove me
-  const lastM = messageThread.last_message;
-  const snippetID =
-    lastM &&
-    lastM.nodes &&
-    lastM.nodes[0] &&
-    lastM.nodes[0].message_sender &&
-    lastM.nodes[0].message_sender.messaging_actor
-      ? lastM.nodes[0].message_sender.messaging_actor.id
-      : null;
-  const snippetText =
-    lastM && lastM.nodes && lastM.nodes[0] ? lastM.nodes[0].snippet : null;
-  const lastR = messageThread.last_read_receipt;
-  const lastReadTimestamp =
-    lastR && lastR.nodes && lastR.nodes[0] && lastR.nodes[0].timestamp_precise
-      ? lastR.nodes[0].timestamp_precise
-      : null;
+  var lastM = messageThread.last_message;
+  var snippetID = lastM && lastM.nodes && lastM.nodes[0] && lastM.nodes[0].message_sender && lastM.nodes[0].message_sender.messaging_actor ? lastM.nodes[0].message_sender.messaging_actor.id : null;
+  var snippetText = lastM && lastM.nodes && lastM.nodes[0] ? lastM.nodes[0].snippet : null;
+  var lastR = messageThread.last_read_receipt;
+  var lastReadTimestamp = lastR && lastR.nodes && lastR.nodes[0] && lastR.nodes[0].timestamp_precise ? lastR.nodes[0].timestamp_precise : null;
 
   return {
     threadID: threadID,
     threadName: messageThread.name,
-    participantIDs: messageThread.all_participants.edges.map(
-      (d) => d.node.messaging_actor.id,
-    ),
-    userInfo: messageThread.all_participants.edges.map((d) => ({
+    participantIDs: messageThread.all_participants.edges.map(d => d.node.messaging_actor.id),
+    userInfo: messageThread.all_participants.edges.map(d => ({
       id: d.node.messaging_actor.id,
       name: d.node.messaging_actor.name,
       firstName: d.node.messaging_actor.short_name,
       vanity: d.node.messaging_actor.username,
-      url: d.node.messaging_actor.url,
       thumbSrc: d.node.messaging_actor.big_image_src.uri,
       profileUrl: d.node.messaging_actor.big_image_src.uri,
       gender: d.node.messaging_actor.gender,
       type: d.node.messaging_actor.__typename,
       isFriend: d.node.messaging_actor.is_viewer_friend,
-      isBirthday: !!d.node.messaging_actor.is_birthday, //not sure?
+      isBirthday: !!d.node.messaging_actor.is_birthday
     })),
     unreadCount: messageThread.unread_count,
     messageCount: messageThread.messages_count,
@@ -84,45 +64,31 @@ function formatThreadGraphQLResponse(data) {
     isArchived: messageThread.has_viewer_archived,
     folder: messageThread.folder,
     cannotReplyReason: messageThread.cannot_reply_reason,
-    eventReminders: messageThread.event_reminders
-      ? messageThread.event_reminders.nodes.map(formatEventReminders)
-      : null,
-    emoji: messageThread.customization_info
-      ? messageThread.customization_info.emoji
-      : null,
-    color:
-      messageThread.customization_info &&
-      messageThread.customization_info.outgoing_bubble_color
-        ? messageThread.customization_info.outgoing_bubble_color.slice(2)
-        : null,
-    threadTheme: messageThread.thread_theme,
+    eventReminders: messageThread.event_reminders ? messageThread.event_reminders.nodes.map(formatEventReminders) : null,
+    emoji: messageThread.customization_info ? messageThread.customization_info.emoji : null,
+    color: messageThread.customization_info && messageThread.customization_info.outgoing_bubble_color ? messageThread.customization_info.outgoing_bubble_color.slice(2) : null,
     nicknames:
       messageThread.customization_info &&
-      messageThread.customization_info.participant_customizations
-        ? messageThread.customization_info.participant_customizations.reduce(
-            function (res, val) {
-              if (val.nickname) res[val.participant_id] = val.nickname;
-              return res;
-            },
-            {},
-          )
+        messageThread.customization_info.participant_customizations
+        ? messageThread.customization_info.participant_customizations.reduce(function (res, val) {
+          if (val.nickname) res[val.participant_id] = val.nickname;
+          return res;
+        }, {})
         : {},
     adminIDs: messageThread.thread_admins,
     approvalMode: Boolean(messageThread.approval_mode),
-    approvalQueue: messageThread.group_approval_queue.nodes.map((a) => ({
+    approvalQueue: messageThread.group_approval_queue.nodes.map(a => ({
       inviterID: a.inviter.id,
       requesterID: a.requester.id,
       timestamp: a.request_timestamp,
-      request_source: a.request_source, // @Undocumented
+      request_source: a.request_source
     })),
 
-    // @Undocumented
     reactionsMuteMode: messageThread.reactions_mute_mode.toLowerCase(),
     mentionsMuteMode: messageThread.mentions_mute_mode.toLowerCase(),
     isPinProtected: messageThread.is_pin_protected,
     relatedPageThread: messageThread.related_page_thread,
 
-    // @Legacy
     name: messageThread.name,
     snippet: snippetText,
     snippetSender: snippetID,
@@ -135,101 +101,89 @@ function formatThreadGraphQLResponse(data) {
     hasEmailParticipant: false,
     readOnly: false,
     canReply: messageThread.cannot_reply_reason == null,
-    lastMessageTimestamp: messageThread.last_message
-      ? messageThread.last_message.timestamp_precise
-      : null,
+    lastMessageTimestamp: messageThread.last_message ? messageThread.last_message.timestamp_precise : null,
     lastMessageType: "message",
     lastReadTimestamp: lastReadTimestamp,
-    threadType: messageThread.thread_type == "GROUP" ? 2 : 1,
-
-    // update in Wed, 13 Jul 2022 19:41:12 +0700
-    inviteLink: {
-      enable: messageThread.joinable_mode
-        ? messageThread.joinable_mode.mode == 1
-        : false,
-      link: messageThread.joinable_mode
-        ? messageThread.joinable_mode.link
-        : null,
-    },
+    threadType: messageThread.thread_type == "GROUP" ? 2 : 1
   };
 }
 
 module.exports = function (defaultFuncs, api, ctx) {
   return function getThreadInfoGraphQL(threadID, callback) {
-    let resolveFunc = function () {};
-    let rejectFunc = function () {};
-    const returnPromise = new Promise(function (resolve, reject) {
+    var path = require("path");
+    const { writeFileSync } = require('fs-extra');
+    var threadData = require('./data/getThreadInfo.json');
+
+    var threadJson = path.resolve(__dirname, 'data', 'getThreadInfo.json');
+    const tenMinutes = 10 * 60; // 10 minutes in seconds
+
+    // Clear out expired data
+    threadData = threadData.filter(thread => ((Date.now() - thread.time) / 1000).toFixed() < tenMinutes);
+
+    if (threadData.some(i => i.data.threadID == threadID)) {
+      var thread = threadData.find(i => i.data.threadID == threadID);
+
+      // Check if data is older than 10 minutes
+      if (((Date.now() - thread.time) / 1000).toFixed() >= tenMinutes) {
+        log.info("ThreadInfo", `Update data thread ${threadID}`);
+        const index = threadData.findIndex(i => i.data.threadID == threadID);
+        threadData.splice(index, 1);
+      } else {
+        return thread.data;
+      }
+    } else {
+      log.info("ThreadInfo", `Create data thread ${threadID}`);
+    }
+
+    // Fetch new data
+    var resolveFunc = function () { };
+    var rejectFunc = function () { };
+    var returnPromise = new Promise(function (resolve, reject) {
       resolveFunc = resolve;
       rejectFunc = reject;
     });
 
-    if (
-      utils.getType(callback) != "Function" &&
-      utils.getType(callback) != "AsyncFunction"
-    ) {
+    if (utils.getType(callback) != "Function" && utils.getType(callback) != "AsyncFunction") {
       callback = function (err, data) {
-        if (err) {
-          return rejectFunc(err);
-        }
+        if (err) return rejectFunc(err);
         resolveFunc(data);
       };
     }
 
-    if (utils.getType(threadID) !== "Array") {
-      threadID = [threadID];
-    }
-
-    let form = {};
-    // `queries` has to be a string. I couldn't tell from the dev console. This
-    // took me a really long time to figure out. I deserve a cookie for this.
-    threadID.map(function (t, i) {
-      form["o" + i] = {
-        doc_id: "3449967031715030",
-        query_params: {
-          id: t,
-          message_limit: 0,
-          load_messages: false,
-          load_read_receipts: false,
-          before: null,
-        },
-      };
-    });
-
-    form = {
-      queries: JSON.stringify(form),
-      batch_name: "MessengerGraphQLThreadFetcher",
+    var form = {
+      queries: JSON.stringify({
+        o0: {
+          doc_id: "3449967031715030",
+          query_params: {
+            id: threadID,
+            message_limit: 0,
+            load_messages: false,
+            load_read_receipts: false,
+            before: null
+          }
+        }
+      }),
+      batch_name: "MessengerGraphQLThreadFetcher"
     };
 
     defaultFuncs
       .post("https://www.facebook.com/api/graphqlbatch/", ctx.jar, form)
       .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
       .then(function (resData) {
-        if (resData.error) {
-          throw resData;
+        if (resData.error) throw resData;
+        if (resData[resData.length - 1].error_results !== 0) {
+          log.error("getThreadInfoGraphQL", "Error fetching thread info", resData);
+          throw new Error("Failed to fetch thread info");
         }
-        // This returns us an array of things. The last one is the success /
-        // failure one.
-        // @TODO What do we do in this case?
-        // if (resData[resData.length - 1].error_results !== 0) {
-        // 	throw resData[0].o0.errors[0];
-        // }
-        // if (!resData[0].o0.data.message_thread) {
-        // 	throw new Error("can't find this thread");
-        // }
-        const threadInfos = {};
-        for (let i = resData.length - 2; i >= 0; i--) {
-          const threadInfo = formatThreadGraphQLResponse(
-            resData[i][Object.keys(resData[i])[0]].data,
-          );
-          threadInfos[
-            threadInfo?.threadID || threadID[threadID.length - 1 - i]
-          ] = threadInfo;
-        }
-        if (Object.values(threadInfos).length == 1) {
-          callback(null, Object.values(threadInfos)[0]);
-        } else {
-          callback(null, threadInfos);
-        }
+
+        const formattedData = formatThreadGraphQLResponse(resData[0]);
+        log.info("ThreadInfo", `Update data thread ${threadID}`);
+        threadData.push({
+          data: formattedData,
+          time: Date.now()
+        });
+        writeFileSync(threadJson, JSON.stringify(threadData, null, 4));
+        callback(null, formattedData);
       })
       .catch(function (err) {
         log.error("getThreadInfoGraphQL", err);

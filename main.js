@@ -12,7 +12,7 @@ const configPath = path.join(__dirname, "json", "config.json");
 const configData = fs.readFileSync(configPath);
 const config = JSON.parse(configData);
 const app = new express();
-const port = 8601;
+const port = process.env.PORT || 3000;
 
 global.client = new Object({
   startTime: new Date(),
@@ -32,6 +32,9 @@ global.data = new Object({
 });
 
 async function start() {
+  app.use(express.static("./includes/web"));
+  app.listen(port);
+  
   const appState = fs.readJSONSync(
     path.join(__dirname, "json", "cookies.json"),
   );

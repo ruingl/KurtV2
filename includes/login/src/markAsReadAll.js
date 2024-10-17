@@ -1,42 +1,35 @@
 "use strict";
 
-const utils = require("../utils");
-const log = require("npmlog");
+var utils = require("../utils");
+var log = require("npmlog");
 
 module.exports = function (defaultFuncs, api, ctx) {
   return function markAsReadAll(callback) {
-    let resolveFunc = function () {};
-    let rejectFunc = function () {};
-    const returnPromise = new Promise(function (resolve, reject) {
+    var resolveFunc = function () { };
+    var rejectFunc = function () { };
+    var returnPromise = new Promise(function (resolve, reject) {
       resolveFunc = resolve;
       rejectFunc = reject;
     });
 
     if (!callback) {
-      callback = function (err, friendList) {
-        if (err) {
-          return rejectFunc(err);
-        }
-        resolveFunc(friendList);
+      callback = function (err, data) {
+        if (err) return rejectFunc(err);
+
+        resolveFunc(data);
       };
     }
 
-    const form = {
-      folder: "inbox",
+    var form = {
+      folder: 'inbox'
     };
 
     defaultFuncs
-      .post(
-        "https://www.facebook.com/ajax/mercury/mark_folder_as_read.php",
-        ctx.jar,
-        form,
-      )
+      .post("https://www.facebook.com/ajax/mercury/mark_folder_as_read.php", ctx.jar, form)
       .then(utils.saveCookies(ctx.jar))
       .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
       .then(function (resData) {
-        if (resData.error) {
-          throw resData;
-        }
+        if (resData.error) throw resData;
 
         return callback();
       })

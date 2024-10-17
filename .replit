@@ -1,5 +1,0 @@
-run = "cowsay Configure me!"
-entrypoint = "README.md"
-
-[nix]
-channel = "stable-23_11"

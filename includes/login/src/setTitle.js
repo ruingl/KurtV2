@@ -1,7 +1,7 @@
 "use strict";
 
-const utils = require("../utils");
-const log = require("npmlog");
+var utils = require("../utils");
+var log = require("npmlog");
 
 module.exports = function (defaultFuncs, api, ctx) {
   return function setTitle(newTitle, threadID, callback) {
@@ -9,31 +9,28 @@ module.exports = function (defaultFuncs, api, ctx) {
       !callback &&
       (utils.getType(threadID) === "Function" ||
         utils.getType(threadID) === "AsyncFunction")
-    ) {
-      throw { error: "please pass a threadID as a second argument." };
-    }
+    ) throw { error: "please pass a threadID as a second argument." };
 
-    let resolveFunc = function () {};
-    let rejectFunc = function () {};
-    const returnPromise = new Promise(function (resolve, reject) {
+
+    var resolveFunc = function () { };
+    var rejectFunc = function () { };
+    var returnPromise = new Promise(function (resolve, reject) {
       resolveFunc = resolve;
       rejectFunc = reject;
     });
 
     if (!callback) {
-      callback = function (err, friendList) {
-        if (err) {
-          return rejectFunc(err);
-        }
-        resolveFunc(friendList);
+      callback = function (err, data) {
+        if (err) return rejectFunc(err);
+        resolveFunc(data);
       };
     }
 
-    const messageAndOTID = utils.generateOfflineThreadingID();
-    const form = {
+    var messageAndOTID = utils.generateOfflineThreadingID();
+    var form = {
       client: "mercury",
       action_type: "ma-type:log-message",
-      author: "fbid:" + (ctx.i_userID || ctx.userID),
+      author: "fbid:" + ctx.userID,
       author_email: "",
       coordinates: "",
       timestamp: Date.now(),
@@ -55,29 +52,16 @@ module.exports = function (defaultFuncs, api, ctx) {
       thread_fbid: threadID,
       thread_name: newTitle,
       thread_id: threadID,
-      log_message_type: "log:thread-name",
+      log_message_type: "log:thread-name"
     };
 
     defaultFuncs
-      .post(
-        "https://www.facebook.com/messaging/set_thread_name/",
-        ctx.jar,
-        form,
-      )
+      .post("https://www.facebook.com/messaging/set_thread_name/", ctx.jar, form)
       .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
       .then(function (resData) {
-        if (resData.error && resData.error === 1545012) {
-          throw { error: "Cannot change chat title: Not member of chat." };
-        }
-
-        if (resData.error && resData.error === 1545003) {
-          throw { error: "Cannot set title of single-user chat." };
-        }
-
-        if (resData.error) {
-          throw resData;
-        }
-
+        if (resData.error && resData.error === 1545012) throw { error: "Cannot change chat title: Not member of chat." };
+        if (resData.error && resData.error === 1545003) throw { error: "Cannot set title of single-user chat." };
+        if (resData.error) throw resData;
         return callback();
       })
       .catch(function (err) {
